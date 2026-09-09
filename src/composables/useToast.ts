@@ -1,12 +1,15 @@
-// src/composables/useToast.ts
-import { ref } from 'vue'
+import * as vue from 'vue'
 
-const activeToast = ref<{ message: string, type: 'success' | 'info' } | null>(null)
+export type ToastType = 'success' | 'info' | 'error'
+
+const activeToast = vue.ref<{ message: string; type: ToastType } | null>(null)
 
 export function useToast() {
-  const showToast = (message: string, type: 'success' | 'info' = 'info') => {
+  const showToast = (message: string, type: ToastType = 'info') => {
     activeToast.value = { message, type }
-    setTimeout(() => { activeToast.value = null }, 3000)
+    setTimeout(() => {
+      activeToast.value = null
+    }, 3000)
   }
   return { activeToast, showToast }
 }

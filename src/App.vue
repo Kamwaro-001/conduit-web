@@ -13,8 +13,9 @@ const { activeToast } = useToast()
       v-if="activeToast"
       class="fixed bottom-4 right-4 px-4 py-3 rounded shadow-lg text-sm font-mono z-50 border"
       :class="{
-        'bg-[#1E293B] text-emerald-400 border-emerald-500/30': activeToast.type === 'success',
-        'bg-[#1E293B] text-primary border-primary/30': activeToast.type === 'info',
+        'bg-neutral-800 text-emerald-400 border-emerald-500/30': activeToast.type === 'success',
+        'bg-neutral-800 text-primary border-primary/30': activeToast.type === 'info',
+        'bg-neutral-800 text-rose-400 border-rose-500/30': activeToast.type === 'error',
       }"
     >
       {{ activeToast.message }}

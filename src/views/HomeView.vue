@@ -1,9 +1,11 @@
-<!-- src/views/HomeView.vue -->
 <script setup lang="ts">
-import { markRaw, ref } from 'vue'
+import { markRaw, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   type Connection,
   type GraphNode,
+  type NodeChange,
+  type EdgeChange,
   type NodeMouseEvent,
   useVueFlow,
   VueFlow,
@@ -13,61 +15,113 @@ import { Background } from '@vue-flow/background'
 import SidebarPalette from '../components/SidebarPalette.vue'
 import ConfigDrawer from '../components/ConfigDrawer.vue'
 import CustomNode from '../components/nodes/CustomNode.vue'
-import { useWorkflowStore } from '../stores/useWorkflowStore'
 import TopNavbar from '@/components/TopNavbar.vue'
+import { useWorkflowStore, type ConduitNodeData } from '../stores/useWorkflowStore'
+import { socketService } from '@/services/socket.service'
+import { apiService } from '@/services/api.service'
+import { useToast } from '@/composables/useToast'
 
+const route = useRoute()
 const workflowStore = useWorkflowStore()
-// const selectedNode = ref(null)
-const selectedNode = ref<GraphNode | null>(null)
+const { showToast } = useToast()
 
-const nodeTypes = {
-  custom: markRaw(CustomNode),
+const selectedNode = ref<GraphNode | null>(null)
+const triggering = ref(false)
+
+const nodeTypes = { custom: markRaw(CustomNode) }
+
+const { screenToFlowCoordinate, onNodesChange, onEdgesChange } = useVueFlow()
+
+// ── Keep store in sync with VueFlow's internal drag / delete state ───────────
+onNodesChange((changes: NodeChange[]) => {
+  for (const change of changes) {
+    if (change.type === 'position' && change.position) {
+      const node = workflowStore.nodes.find((n) => n.id === change.id)
+      if (node) node.position = change.position
+    }
+    if (change.type === 'remove') {
+      workflowStore.removeNode(change.id)
+    }
+  }
+})
+
+onEdgesChange((changes: EdgeChange[]) => {
+  for (const change of changes) {
+    if (change.type === 'remove') {
+      workflowStore.removeEdge(change.id)
+    }
+  }
+})
+
+// ── Lifecycle ─────────────────────────────────────────────────────────────────
+onMounted(async () => {
+  const id = route.params.id as string
+  try {
+    await workflowStore.loadWorkflow(id)
+    socketService.connect(id)
+  } catch {
+    showToast('Failed to load workflow.', 'error')
+  }
+})
+
+onUnmounted(() => {
+  socketService.disconnect()
+})
+
+// ── Canvas interactions ───────────────────────────────────────────────────────
+const NODE_DEFAULTS: Record<string, { label: string; description: string; backendType: ConduitNodeData['backendType'] }> = {
+  webhook:   { label: 'Webhook Trigger',    description: 'POST /v1/webhook',         backendType: 'WEBHOOK' },
+  condition: { label: 'Condition / Branch', description: 'IF / ELSE logic',          backendType: 'CONDITION' },
+  email:     { label: 'Send Email',         description: 'Template: welcome-email',  backendType: 'EMAIL' },
+  delay:     { label: 'Delay',              description: '5 seconds',                backendType: 'DELAY' },
 }
 
-const { screenToFlowCoordinate } = useVueFlow()
-
-const onDrop = (event: DragEvent) => {
+function onDrop(event: DragEvent) {
   const type = event.dataTransfer?.getData('application/vueflow')
-  if (!type) return
+  if (!type || !NODE_DEFAULTS[type]) return
 
   const position = screenToFlowCoordinate({ x: event.clientX, y: event.clientY })
-  const isWebhook = type === 'webhook'
-  const isCondition = type === 'condition'
+  const defaults = NODE_DEFAULTS[type]
 
-  const newNode = {
+  workflowStore.addNode({
     id: `node_${Date.now()}`,
     type: 'custom',
     position,
-    label: isWebhook ? 'Webhook Trigger' : isCondition ? 'KYC & Age Check' : 'Send Welcome Email',
-    data: {
-      description: isWebhook
-        ? 'POST /v1/user/signup'
-        : isCondition
-          ? 'Condition Rule (AND)'
-          : 'Template: auth-kyc-welcome',
-      backendType: (isWebhook ? 'WEBHOOK' : isCondition ? 'CONDITION' : 'EMAIL') as 'WEBHOOK' | 'CONDITION' | 'EMAIL',
-      status: 'IDLE' as const,
-    },
-  }
-
-  workflowStore.addNode(newNode)
+    data: { ...defaults, status: 'IDLE' },
+  })
 }
 
-// allow dropping by preventing default dragover behavior
+function onDragOver(event: DragEvent) {
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+}
+
 function onNodeClick(e: NodeMouseEvent) {
   selectedNode.value = e.node
 }
 
-const onDragOver = (event: DragEvent) => {
-  event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
+function onConnect(connection: Connection) {
+  workflowStore.addEdge(connection)
 }
 
-const onConnect = (connection: Connection) => {
-  workflowStore.addEdge(connection)
-  console.log('hey')
+// ── Trigger execution ─────────────────────────────────────────────────────────
+async function handleTrigger() {
+  if (!workflowStore.workflowId || triggering.value) return
+
+  if (workflowStore.workflowStatus !== 'PUBLISHED') {
+    showToast('Publish the workflow before triggering it.', 'info')
+    return
+  }
+
+  triggering.value = true
+  try {
+    await apiService.triggerWebhook(workflowStore.workflowId)
+    showToast('Execution triggered — watch the nodes.', 'success')
+  } catch {
+    showToast('Failed to trigger execution.', 'error')
+  } finally {
+    triggering.value = false
+  }
 }
 </script>
 
@@ -75,7 +129,6 @@ const onConnect = (connection: Connection) => {
   <div class="h-screen w-screen bg-[#0F172A] flex flex-col font-sans overflow-hidden">
     <TopNavbar />
 
-    <!-- Main Workspace Area -->
     <div class="flex-1 flex overflow-hidden">
       <SidebarPalette />
 
@@ -90,9 +143,31 @@ const onConnect = (connection: Connection) => {
         >
           <Background pattern-color="#475569" :gap="16" />
         </VueFlow>
+
+        <!-- Empty state -->
+        <div
+          v-if="workflowStore.nodes.length === 0"
+          class="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
+          <div class="text-center space-y-2">
+            <p class="text-slate-600 text-sm font-mono">Drag nodes from the palette to get started</p>
+          </div>
+        </div>
       </main>
 
-      <ConfigDrawer :selected-node="selectedNode" />
+      <ConfigDrawer :selected-node="selectedNode" @close="selectedNode = null" />
     </div>
+
+    <!-- Trigger button -->
+    <button
+      @click="handleTrigger"
+      :disabled="triggering"
+      class="fixed bottom-24 right-4 z-50 px-4 py-2 rounded shadow-lg text-xs font-bold transition-colors disabled:opacity-50"
+      :class="workflowStore.workflowStatus === 'PUBLISHED'
+        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+        : 'bg-slate-700 text-slate-400 cursor-not-allowed'"
+    >
+      {{ triggering ? '⏳ Triggering…' : '▶ Trigger Execution' }}
+    </button>
   </div>
 </template>
