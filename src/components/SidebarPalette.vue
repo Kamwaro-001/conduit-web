@@ -1,20 +1,31 @@
 <script setup lang="ts">
+import { telemetryState } from '@/services/socket.service'
 import { ref, computed } from 'vue'
 
 const searchQuery = ref('')
 
 const triggers = [
+  { type: 'manual', name: 'Manual Trigger', sub: 'Execute via UI', draggable: true },
   { type: 'webhook', name: 'Webhook Listener', sub: 'HTTP POST/GET', draggable: true },
+  { type: 'event', name: 'Event Trigger', sub: 'Internal System Events', draggable: true },
   { type: 'schedule', name: 'Schedule (Cron)', sub: 'Timer interval', draggable: false },
+  { type: 'trigger', name: 'App Trigger', sub: 'Manual or API execution', draggable: true },
 ]
 
 const logicNodes = [
   { type: 'condition', name: 'Condition / Branch', sub: 'IF / ELSE Boolean', draggable: true },
+  { type: 'switch', name: 'Switch / Router', sub: 'Multi-path branching', draggable: true },
+  { type: 'loop', name: 'Loop / Iterator', sub: 'Iterate over arrays', draggable: true },
+  { type: 'merge', name: 'Merge', sub: 'Combine execution paths', draggable: true },
   { type: 'delay', name: 'Delay', sub: 'Wait N seconds', draggable: true },
 ]
 
-const actionNodes = [{ type: 'email', name: 'Send Email', sub: 'SMTP / SendGrid', draggable: true }]
-
+const actionNodes = [
+  { type: 'http', name: 'HTTP Request', sub: 'REST API Call', draggable: true },
+  { type: 'transform', name: 'Data Transform', sub: 'Map JSON payloads', draggable: true },
+  { type: 'code', name: 'Custom Code', sub: 'Run JS/TS snippets', draggable: true },
+  { type: 'email', name: 'Send Email', sub: 'SMTP / SendGrid', draggable: true },
+]
 function matches(name: string) {
   return name.toLowerCase().includes(searchQuery.value.toLowerCase())
 }
@@ -200,12 +211,12 @@ function onDragStart(event: DragEvent, nodeType: string) {
       </div>
       <div class="flex justify-between">
         <span class="text-slate-500">Worker pool</span>
-        <span class="text-slate-300">99.98% healthy</span>
+        <span class="text-slate-300">{{ telemetryState.workerHealth }}% healthy</span>
       </div>
       <div class="h-px w-full bg-slate-800" />
       <div class="flex justify-between">
         <span class="text-slate-500">Queue depth</span>
-        <span class="text-secondary font-bold">12 active jobs</span>
+        <span class="text-secondary font-bold">{{ telemetryState.activeJobs }} active jobs</span>
       </div>
     </div>
   </aside>

@@ -69,11 +69,29 @@ onUnmounted(() => {
 })
 
 // ── Canvas interactions ───────────────────────────────────────────────────────
-const NODE_DEFAULTS: Record<string, { label: string; description: string; backendType: ConduitNodeData['backendType'] }> = {
-  webhook:   { label: 'Webhook Trigger',    description: 'POST /v1/webhook',         backendType: 'WEBHOOK' },
-  condition: { label: 'Condition / Branch', description: 'IF / ELSE logic',          backendType: 'CONDITION' },
-  email:     { label: 'Send Email',         description: 'Template: welcome-email',  backendType: 'EMAIL' },
-  delay:     { label: 'Delay',              description: '5 seconds',                backendType: 'DELAY' },
+const NODE_DEFAULTS: Record<
+  string,
+  { label: string; description: string; backendType: ConduitNodeData['backendType'] }
+> = {
+  manual: { label: 'Manual Trigger', description: 'Execute from dashboard', backendType: 'MANUAL' },
+  webhook: { label: 'Webhook Trigger', description: 'POST /v1/webhook', backendType: 'WEBHOOK' },
+  trigger: { label: 'App Trigger', description: 'Manual execution', backendType: 'TRIGGER' },
+  event: { label: 'Event Trigger', description: 'Listen to system events', backendType: 'EVENT' },
+  condition: {
+    label: 'Condition / Branch',
+    description: 'IF / ELSE logic',
+    backendType: 'CONDITION',
+    rules: [],
+    matchType: 'AND',
+  },
+  switch: { label: 'Switch / Router', description: 'Multi-path routing', backendType: 'SWITCH' },
+  loop: { label: 'Loop / Iterator', description: 'Iterate over arrays', backendType: 'LOOP' },
+  merge: { label: 'Merge', description: 'Wait for branches', backendType: 'MERGE' },
+  delay: { label: 'Delay', description: '5 seconds', backendType: 'DELAY' },
+  http: { label: 'HTTP Request', description: 'REST API Request', backendType: 'HTTP' },
+  transform: { label: 'Data Transform', description: 'Map payload data', backendType: 'TRANSFORM' },
+  code: { label: 'Custom Code', description: 'JS/TS Code execution', backendType: 'CODE' },
+  email: { label: 'Send Email', description: 'Template: welcome-email', backendType: 'EMAIL' },
 }
 
 function onDrop(event: DragEvent) {
@@ -115,6 +133,9 @@ async function handleTrigger() {
 
   triggering.value = true
   try {
+    // make sure backend has latest nodes and edges
+    await workflowStore.syncCanvas()
+
     await apiService.triggerWebhook(workflowStore.workflowId)
     showToast('Execution triggered — watch the nodes.', 'success')
   } catch {
@@ -150,7 +171,9 @@ async function handleTrigger() {
           class="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
           <div class="text-center space-y-2">
-            <p class="text-slate-600 text-sm font-mono">Drag nodes from the palette to get started</p>
+            <p class="text-slate-600 text-sm font-mono">
+              Drag nodes from the palette to get started
+            </p>
           </div>
         </div>
       </main>
@@ -163,9 +186,11 @@ async function handleTrigger() {
       @click="handleTrigger"
       :disabled="triggering"
       class="fixed bottom-24 right-4 z-50 px-4 py-2 rounded shadow-lg text-xs font-bold transition-colors disabled:opacity-50"
-      :class="workflowStore.workflowStatus === 'PUBLISHED'
-        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-        : 'bg-slate-700 text-slate-400 cursor-not-allowed'"
+      :class="
+        workflowStore.workflowStatus === 'PUBLISHED'
+          ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+          : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+      "
     >
       {{ triggering ? '⏳ Triggering…' : '▶ Trigger Execution' }}
     </button>

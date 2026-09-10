@@ -1,5 +1,11 @@
+import { ref } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import { useWorkflowStore, type ConduitNodeData } from '../stores/useWorkflowStore'
+
+export const telemetryState = ref({
+  activeJobs: 0,
+  workerHealth: '100.00',
+})
 
 class SocketService {
   private socket: Socket | null = null
@@ -22,6 +28,11 @@ class SocketService {
         store.updateNodeStatus(data.nodeId, data.status, data.duration)
       },
     )
+
+    this.socket.on('engine_telemetry', (data: { activeJobs: number; workerHealth: string }) => {
+      telemetryState.value.activeJobs = data.activeJobs
+      telemetryState.value.workerHealth = data.workerHealth
+    })
 
     this.socket.on('disconnect', () => {
       console.log('[Conduit] Disconnected from engine telemetry')

@@ -11,14 +11,34 @@ export interface ConditionRule {
 }
 
 export interface ConduitNodeData {
-  label: string   // display name — stored in config so it survives sync/reload
+  label: string // display name — stored in config so it survives sync/reload
   description: string
-  backendType: 'TRIGGER' | 'WEBHOOK' | 'CONDITION' | 'DELAY' | 'EMAIL'
+  backendType:
+    | 'MANUAL'
+    | 'EVENT'
+    | 'WEBHOOK'
+    | 'CONDITION'
+    | 'SWITCH'
+    | 'LOOP'
+    | 'MERGE'
+    | 'DELAY'
+    | 'HTTP'
+    | 'TRANSFORM'
+    | 'CODE'
+    | 'EMAIL'
   status?: 'IDLE' | 'RUNNING' | 'SUCCESS' | 'FAILED'
   executionTimeMs?: number
   outputPreview?: string
   rules?: ConditionRule[]
   matchType?: 'AND' | 'OR'
+  httpMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  httpUrl?: string
+  codeSnippet?: string
+  eventTopic?: string
+  delay_ms?: number
+  field?: string
+  threshold?: number
+  recipient?: string
 }
 
 export const useWorkflowStore = defineStore('workflow', () => {
@@ -37,6 +57,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       id: `edge_${connection.source}_${connection.target}`,
       source: connection.source,
       target: connection.target,
+      ...(connection.sourceHandle && { sourceHandle: connection.sourceHandle }),
       style: { stroke: '#8B5CF6', strokeWidth: 2 },
       animated: true,
     }
@@ -71,13 +92,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
     nodes.value = workflow.nodes.map((apiNode) => ({
       id: apiNode.id,
       type: 'custom',
-      position: apiNode.uiPosition,
+      position: apiNode.ui_position,
       data: {
         label: (apiNode.config.label as string) ?? apiNode.type,
-        backendType: apiNode.type,
+        backendType: apiNode.type as ConduitNodeData['backendType'],
         description: (apiNode.config.description as string) ?? '',
-        rules: apiNode.config.rules as ConditionRule[] | undefined,
-        matchType: apiNode.config.matchType as 'AND' | 'OR' | undefined,
+        ...apiNode.config,
         status: 'IDLE' as const,
       },
     }))
@@ -102,17 +122,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     const payload = {
       nodes: nodes.value.map((node) => {
-        const {
-          backendType,
-          status: _s,
-          executionTimeMs: _e,
-          outputPreview: _o,
-          ...config
-        } = node.data!
+        const { backendType, status, executionTimeMs, outputPreview, ...config } = node.data!
         return {
           id: node.id,
           type: backendType,
-          config,           // includes label, description, rules, matchType
+          config,
           ui_position: node.position,
         }
       }),
@@ -125,7 +139,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
 
     const updated = await apiService.syncWorkflow(workflowId.value, payload)
-    // Only refresh metadata — don't reload nodes/edges to avoid canvas flicker
     workflowName.value = updated.name
     workflowStatus.value = updated.status
     return updated

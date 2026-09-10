@@ -3,7 +3,19 @@ const TOKEN_KEY = 'conduit_token'
 
 // ---- Shared types (mirrors backend DTOs / entities) ----
 
-export type NodeType = 'TRIGGER' | 'DELAY' | 'EMAIL' | 'CONDITION' | 'WEBHOOK'
+export type NodeType =
+  | 'MANUAL'
+  | 'EVENT'
+  | 'WEBHOOK'
+  | 'CONDITION'
+  | 'SWITCH'
+  | 'LOOP'
+  | 'MERGE'
+  | 'DELAY'
+  | 'HTTP'
+  | 'TRANSFORM'
+  | 'CODE'
+  | 'EMAIL'
 export type WorkflowStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
 export type UserRole = 'ADMIN' | 'USER'
 
@@ -11,7 +23,7 @@ export interface ApiWorkflowNode {
   id: string
   type: NodeType
   config: Record<string, unknown>
-  uiPosition: { x: number; y: number }
+  ui_position: { x: number; y: number }
 }
 
 export interface ApiWorkflowEdge {
