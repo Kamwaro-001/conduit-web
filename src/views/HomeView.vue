@@ -71,12 +71,20 @@ onUnmounted(() => {
 // ── Canvas interactions ───────────────────────────────────────────────────────
 const NODE_DEFAULTS: Record<
   string,
-  { label: string; description: string; backendType: ConduitNodeData['backendType'] }
+  {
+    label: string
+    description: string
+    backendType: ConduitNodeData['backendType']
+  } & Partial<ConduitNodeData>
 > = {
-  manual: { label: 'Manual Trigger', description: 'Execute from dashboard', backendType: 'MANUAL' },
+  trigger: { label: 'App Trigger', description: 'Manual or API execution', backendType: 'TRIGGER' },
   webhook: { label: 'Webhook Trigger', description: 'POST /v1/webhook', backendType: 'WEBHOOK' },
-  trigger: { label: 'App Trigger', description: 'Manual execution', backendType: 'TRIGGER' },
-  event: { label: 'Event Trigger', description: 'Listen to system events', backendType: 'EVENT' },
+  schedule: {
+    label: 'Schedule',
+    description: '* * * * *',
+    backendType: 'SCHEDULE',
+    cronExpression: '* * * * *',
+  },
   condition: {
     label: 'Condition / Branch',
     description: 'IF / ELSE logic',
@@ -84,14 +92,28 @@ const NODE_DEFAULTS: Record<
     rules: [],
     matchType: 'AND',
   },
-  switch: { label: 'Switch / Router', description: 'Multi-path routing', backendType: 'SWITCH' },
-  loop: { label: 'Loop / Iterator', description: 'Iterate over arrays', backendType: 'LOOP' },
-  merge: { label: 'Merge', description: 'Wait for branches', backendType: 'MERGE' },
-  delay: { label: 'Delay', description: '5 seconds', backendType: 'DELAY' },
-  http: { label: 'HTTP Request', description: 'REST API Request', backendType: 'HTTP' },
-  transform: { label: 'Data Transform', description: 'Map payload data', backendType: 'TRANSFORM' },
-  code: { label: 'Custom Code', description: 'JS/TS Code execution', backendType: 'CODE' },
-  email: { label: 'Send Email', description: 'Template: welcome-email', backendType: 'EMAIL' },
+  delay: { label: 'Delay', description: '5000 ms', backendType: 'DELAY', delay_ms: 5000 },
+  http_fetch: {
+    label: 'HTTP Fetch',
+    description: 'REST API Request',
+    backendType: 'HTTP_FETCH',
+    httpMethod: 'GET',
+    httpUrl: '',
+  },
+  email: { label: 'Send Email', description: 'SMTP delivery', backendType: 'EMAIL', recipient: '' },
+  vision: {
+    label: 'Vision / AI',
+    description: 'Analyze image or prompt',
+    backendType: 'VISION',
+    visionPrompt: '',
+  },
+  regex: {
+    label: 'Regex Match',
+    description: 'Pattern extraction',
+    backendType: 'REGEX',
+    regexPattern: '',
+    regexInputField: 'payload.',
+  },
 }
 
 function onDrop(event: DragEvent) {

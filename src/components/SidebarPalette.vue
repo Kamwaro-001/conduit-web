@@ -5,26 +5,21 @@ import { ref, computed } from 'vue'
 const searchQuery = ref('')
 
 const triggers = [
-  { type: 'manual', name: 'Manual Trigger', sub: 'Execute via UI', draggable: true },
-  { type: 'webhook', name: 'Webhook Listener', sub: 'HTTP POST/GET', draggable: true },
-  { type: 'event', name: 'Event Trigger', sub: 'Internal System Events', draggable: true },
-  { type: 'schedule', name: 'Schedule (Cron)', sub: 'Timer interval', draggable: false },
   { type: 'trigger', name: 'App Trigger', sub: 'Manual or API execution', draggable: true },
+  { type: 'webhook', name: 'Webhook Listener', sub: 'HTTP POST/GET', draggable: true },
+  { type: 'schedule', name: 'Schedule (Cron)', sub: 'Cron timer interval', draggable: true },
 ]
 
 const logicNodes = [
   { type: 'condition', name: 'Condition / Branch', sub: 'IF / ELSE Boolean', draggable: true },
-  { type: 'switch', name: 'Switch / Router', sub: 'Multi-path branching', draggable: true },
-  { type: 'loop', name: 'Loop / Iterator', sub: 'Iterate over arrays', draggable: true },
-  { type: 'merge', name: 'Merge', sub: 'Combine execution paths', draggable: true },
-  { type: 'delay', name: 'Delay', sub: 'Wait N seconds', draggable: true },
+  { type: 'delay', name: 'Delay', sub: 'Wait N milliseconds', draggable: true },
 ]
 
 const actionNodes = [
-  { type: 'http', name: 'HTTP Request', sub: 'REST API Call', draggable: true },
-  { type: 'transform', name: 'Data Transform', sub: 'Map JSON payloads', draggable: true },
-  { type: 'code', name: 'Custom Code', sub: 'Run JS/TS snippets', draggable: true },
+  { type: 'http_fetch', name: 'HTTP Fetch', sub: 'REST API Call', draggable: true },
   { type: 'email', name: 'Send Email', sub: 'SMTP / SendGrid', draggable: true },
+  { type: 'vision', name: 'Vision / AI', sub: 'Analyze image or prompt', draggable: true },
+  { type: 'regex', name: 'Regex Match', sub: 'Pattern extraction', draggable: true },
 ]
 function matches(name: string) {
   return name.toLowerCase().includes(searchQuery.value.toLowerCase())

@@ -19,15 +19,26 @@ const localDescription = ref('')
 const localRules = ref<ConditionRule[]>([])
 const localMatchType = ref<'AND' | 'OR'>('AND')
 
+// HTTP_FETCH
 const localHttpMethod = ref<'GET' | 'POST' | 'PUT' | 'DELETE'>('GET')
 const localHttpUrl = ref('')
-const localCodeSnippet = ref('')
-const localEventTopic = ref('')
+const localHttpBody = ref('')
 
+// DELAY
 const localDelayMs = ref(0)
-const localField = ref('')
-const localThreshold = ref(0)
+
+// EMAIL
 const localRecipient = ref('')
+
+// SCHEDULE
+const localCronExpression = ref('')
+
+// VISION
+const localVisionPrompt = ref('')
+
+// REGEX
+const localRegexPattern = ref('')
+const localRegexInputField = ref('')
 
 const saving = ref(false)
 
@@ -42,13 +53,14 @@ watch(
 
       localHttpMethod.value = node.data.httpMethod ?? 'GET'
       localHttpUrl.value = node.data.httpUrl ?? ''
-      localCodeSnippet.value = node.data.codeSnippet ?? ''
-      localEventTopic.value = node.data.eventTopic ?? ''
+      localHttpBody.value = node.data.httpBody ?? ''
 
       localDelayMs.value = node.data.delay_ms ?? 5000
-      localField.value = node.data.field ?? 'amount'
-      localThreshold.value = node.data.threshold ?? 100
       localRecipient.value = node.data.recipient ?? ''
+      localCronExpression.value = node.data.cronExpression ?? '* * * * *'
+      localVisionPrompt.value = node.data.visionPrompt ?? ''
+      localRegexPattern.value = node.data.regexPattern ?? ''
+      localRegexInputField.value = node.data.regexInputField ?? 'payload.'
     }
   },
   { immediate: true },
@@ -82,13 +94,14 @@ async function saveChanges() {
 
   props.selectedNode.data.httpMethod = localHttpMethod.value
   props.selectedNode.data.httpUrl = localHttpUrl.value
-  props.selectedNode.data.codeSnippet = localCodeSnippet.value
-  props.selectedNode.data.eventTopic = localEventTopic.value
+  props.selectedNode.data.httpBody = localHttpBody.value
 
   props.selectedNode.data.delay_ms = Number(localDelayMs.value)
-  props.selectedNode.data.field = localField.value
-  props.selectedNode.data.threshold = Number(localThreshold.value)
   props.selectedNode.data.recipient = localRecipient.value
+  props.selectedNode.data.cronExpression = localCronExpression.value
+  props.selectedNode.data.visionPrompt = localVisionPrompt.value
+  props.selectedNode.data.regexPattern = localRegexPattern.value
+  props.selectedNode.data.regexInputField = localRegexInputField.value
 
   // Persist to backend
   try {
@@ -196,8 +209,8 @@ async function saveChanges() {
         />
       </div>
 
-      <!-- HTTP Request Config -->
-      <div v-if="selectedNode.data.backendType === 'HTTP'" class="space-y-4">
+      <!-- HTTP_FETCH Config -->
+      <div v-if="selectedNode.data.backendType === 'HTTP_FETCH'" class="space-y-4">
         <div>
           <label class="block text-[10px] text-slate-500 mb-1">Method</label>
           <select
@@ -219,29 +232,70 @@ async function saveChanges() {
             class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono"
           />
         </div>
-      </div>
-
-      <!-- Code Execution Config -->
-      <div v-if="selectedNode.data.backendType === 'CODE'" class="space-y-4">
         <div>
-          <label class="block text-[10px] text-slate-500 mb-1">Code Snippet (JavaScript)</label>
+          <label class="block text-[10px] text-slate-500 mb-1">Request Body (JSON)</label>
           <textarea
-            v-model="localCodeSnippet"
-            rows="6"
+            v-model="localHttpBody"
+            rows="4"
+            placeholder='{"key": "value"}'
             class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-xs text-slate-300 font-mono"
           ></textarea>
         </div>
       </div>
 
-      <!-- Event Topic Config -->
-      <div v-if="selectedNode.data.backendType === 'EVENT'" class="space-y-4">
+      <!-- SCHEDULE Config -->
+      <div v-if="selectedNode.data.backendType === 'SCHEDULE'" class="space-y-4">
         <div>
-          <label class="block text-[10px] text-slate-500 mb-1">Event Topic Name</label>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Cron Expression</label
+          >
           <input
-            v-model="localEventTopic"
+            v-model="localCronExpression"
             type="text"
-            placeholder="user.created"
-            class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono"
+            placeholder="* * * * *"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
+          />
+          <p class="text-[10px] text-slate-500 mt-1 font-mono">min hour day month weekday</p>
+        </div>
+      </div>
+
+      <!-- VISION Config -->
+      <div v-if="selectedNode.data.backendType === 'VISION'" class="space-y-4">
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Vision Prompt / Instruction</label
+          >
+          <textarea
+            v-model="localVisionPrompt"
+            rows="5"
+            placeholder="Describe what to analyze or extract from the image..."
+            class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-xs text-slate-300 font-mono focus:border-primary focus:outline-none"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- REGEX Config -->
+      <div v-if="selectedNode.data.backendType === 'REGEX'" class="space-y-4">
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Regex Pattern</label
+          >
+          <input
+            v-model="localRegexPattern"
+            type="text"
+            placeholder="^[a-z]+$"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Input Field Path</label
+          >
+          <input
+            v-model="localRegexInputField"
+            type="text"
+            placeholder="payload.text"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
           />
         </div>
       </div>

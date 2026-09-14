@@ -14,31 +14,36 @@ export interface ConduitNodeData {
   label: string // display name — stored in config so it survives sync/reload
   description: string
   backendType:
-    | 'MANUAL'
-    | 'EVENT'
-    | 'WEBHOOK'
-    | 'CONDITION'
-    | 'SWITCH'
-    | 'LOOP'
-    | 'MERGE'
+    | 'TRIGGER'
+    | 'SCHEDULE'
     | 'DELAY'
-    | 'HTTP'
-    | 'TRANSFORM'
-    | 'CODE'
+    | 'CONDITION'
     | 'EMAIL'
+    | 'WEBHOOK'
+    | 'HTTP_FETCH'
+    | 'VISION'
+    | 'REGEX'
   status?: 'IDLE' | 'RUNNING' | 'SUCCESS' | 'FAILED'
   executionTimeMs?: number
   outputPreview?: string
+  // CONDITION
   rules?: ConditionRule[]
   matchType?: 'AND' | 'OR'
+  // HTTP_FETCH
   httpMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   httpUrl?: string
-  codeSnippet?: string
-  eventTopic?: string
+  httpBody?: string
+  // DELAY
   delay_ms?: number
-  field?: string
-  threshold?: number
+  // EMAIL
   recipient?: string
+  // SCHEDULE
+  cronExpression?: string
+  // VISION
+  visionPrompt?: string
+  // REGEX
+  regexPattern?: string
+  regexInputField?: string
 }
 
 export const useWorkflowStore = defineStore('workflow', () => {
