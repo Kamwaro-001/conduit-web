@@ -30,20 +30,25 @@ export interface ConduitNodeData {
   rules?: ConditionRule[]
   matchType?: 'AND' | 'OR'
   // HTTP_FETCH
-  httpMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE'
-  httpUrl?: string
-  httpBody?: string
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  url?: string
   // DELAY
   delay_ms?: number
   // EMAIL
   recipient?: string
+  subject?: string
+  body?: string
   // SCHEDULE
   cronExpression?: string
   // VISION
-  visionPrompt?: string
+  prompt?: string
+  imageUrlField?: string
+  model?: string
+
   // REGEX
-  regexPattern?: string
-  regexInputField?: string
+  pattern?: string
+  inputField?: string
+  flags?: string
 }
 
 export const useWorkflowStore = defineStore('workflow', () => {
@@ -52,6 +57,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const workflowId: Ref<string | null> = ref(null)
   const workflowName: Ref<string> = ref('')
   const workflowStatus: Ref<WorkflowStatus | null> = ref(null)
+  const hasUnsavedChanges = ref(false)
 
   function addNode(node: Node<ConduitNodeData>) {
     nodes.value.push(node)
@@ -146,6 +152,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const updated = await apiService.syncWorkflow(workflowId.value, payload)
     workflowName.value = updated.name
     workflowStatus.value = updated.status
+    hasUnsavedChanges.value = false
     return updated
   }
 
@@ -161,6 +168,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     workflowId,
     workflowName,
     workflowStatus,
+    hasUnsavedChanges,
     addNode,
     addEdge,
     removeNode,

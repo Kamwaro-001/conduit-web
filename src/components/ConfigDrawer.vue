@@ -22,23 +22,27 @@ const localMatchType = ref<'AND' | 'OR'>('AND')
 // HTTP_FETCH
 const localHttpMethod = ref<'GET' | 'POST' | 'PUT' | 'DELETE'>('GET')
 const localHttpUrl = ref('')
-const localHttpBody = ref('')
 
 // DELAY
 const localDelayMs = ref(0)
 
 // EMAIL
 const localRecipient = ref('')
+const localSubject = ref('')
+const localBody = ref('')
 
 // SCHEDULE
 const localCronExpression = ref('')
 
 // VISION
 const localVisionPrompt = ref('')
+const localVisionImageUrlField = ref('')
+const localVisionModel = ref('')
 
 // REGEX
 const localRegexPattern = ref('')
 const localRegexInputField = ref('')
+const localRegexFlags = ref('i')
 
 const saving = ref(false)
 
@@ -51,16 +55,20 @@ watch(
       localRules.value = JSON.parse(JSON.stringify(node.data.rules ?? []))
       localMatchType.value = node.data.matchType ?? 'AND'
 
-      localHttpMethod.value = node.data.httpMethod ?? 'GET'
-      localHttpUrl.value = node.data.httpUrl ?? ''
-      localHttpBody.value = node.data.httpBody ?? ''
+      localHttpMethod.value = node.data.method ?? 'GET'
+      localHttpUrl.value = node.data.url ?? ''
 
       localDelayMs.value = node.data.delay_ms ?? 5000
       localRecipient.value = node.data.recipient ?? ''
+      localSubject.value = node.data.subject ?? ''
+      localBody.value = node.data.body ?? ''
       localCronExpression.value = node.data.cronExpression ?? '* * * * *'
-      localVisionPrompt.value = node.data.visionPrompt ?? ''
-      localRegexPattern.value = node.data.regexPattern ?? ''
-      localRegexInputField.value = node.data.regexInputField ?? 'payload.'
+      localVisionPrompt.value = node.data.prompt ?? ''
+      localVisionImageUrlField.value = node.data.imageUrlField ?? ''
+      localVisionModel.value = node.data.model ?? ''
+      localRegexPattern.value = node.data.pattern ?? ''
+      localRegexInputField.value = node.data.inputField ?? 'payload.'
+      localRegexFlags.value = node.data.flags ?? 'i'
     }
   },
   { immediate: true },
@@ -92,26 +100,25 @@ async function saveChanges() {
   props.selectedNode.data.rules = JSON.parse(JSON.stringify(localRules.value))
   props.selectedNode.data.matchType = localMatchType.value
 
-  props.selectedNode.data.httpMethod = localHttpMethod.value
-  props.selectedNode.data.httpUrl = localHttpUrl.value
-  props.selectedNode.data.httpBody = localHttpBody.value
+  props.selectedNode.data.method = localHttpMethod.value
+  props.selectedNode.data.url = localHttpUrl.value
 
   props.selectedNode.data.delay_ms = Number(localDelayMs.value)
   props.selectedNode.data.recipient = localRecipient.value
+  props.selectedNode.data.subject = localSubject.value
+  props.selectedNode.data.body = localBody.value
   props.selectedNode.data.cronExpression = localCronExpression.value
-  props.selectedNode.data.visionPrompt = localVisionPrompt.value
-  props.selectedNode.data.regexPattern = localRegexPattern.value
-  props.selectedNode.data.regexInputField = localRegexInputField.value
+  props.selectedNode.data.prompt = localVisionPrompt.value
+  props.selectedNode.data.imageUrlField = localVisionImageUrlField.value
+  props.selectedNode.data.model = localVisionModel.value
+  props.selectedNode.data.pattern = localRegexPattern.value
+  props.selectedNode.data.inputField = localRegexInputField.value
+  props.selectedNode.data.flags = localRegexFlags.value
 
-  // Persist to backend
-  try {
-    await workflowStore.syncCanvas()
-    showToast('Node saved.', 'success')
-  } catch {
-    showToast('Failed to save — changes are applied locally.', 'error')
-  } finally {
-    saving.value = false
-  }
+  // Mark as unsaved so the user can save everything later from the topbar
+  workflowStore.hasUnsavedChanges = true
+  showToast('Node config updated locally.', 'success')
+  saving.value = false
 }
 </script>
 
@@ -232,15 +239,6 @@ async function saveChanges() {
             class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono"
           />
         </div>
-        <div>
-          <label class="block text-[10px] text-slate-500 mb-1">Request Body (JSON)</label>
-          <textarea
-            v-model="localHttpBody"
-            rows="4"
-            placeholder='{"key": "value"}'
-            class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-xs text-slate-300 font-mono"
-          ></textarea>
-        </div>
       </div>
 
       <!-- SCHEDULE Config -->
@@ -263,6 +261,17 @@ async function saveChanges() {
       <div v-if="selectedNode.data.backendType === 'VISION'" class="space-y-4">
         <div>
           <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Image URL Field</label
+          >
+          <input
+            v-model="localVisionImageUrlField"
+            type="text"
+            placeholder="node-id.extracted"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
             >Vision Prompt / Instruction</label
           >
           <textarea
@@ -272,10 +281,32 @@ async function saveChanges() {
             class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-xs text-slate-300 font-mono focus:border-primary focus:outline-none"
           ></textarea>
         </div>
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Model</label
+          >
+          <input
+            v-model="localVisionModel"
+            type="text"
+            placeholder="gemini-3.6-flash"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
+          />
+        </div>
       </div>
 
       <!-- REGEX Config -->
       <div v-if="selectedNode.data.backendType === 'REGEX'" class="space-y-4">
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Input Field Path</label
+          >
+          <input
+            v-model="localRegexInputField"
+            type="text"
+            placeholder="payload.text"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
+          />
+        </div>
         <div>
           <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
             >Regex Pattern</label
@@ -289,12 +320,12 @@ async function saveChanges() {
         </div>
         <div>
           <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
-            >Input Field Path</label
+            >Flags</label
           >
           <input
-            v-model="localRegexInputField"
+            v-model="localRegexFlags"
             type="text"
-            placeholder="payload.text"
+            placeholder="i"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
           />
         </div>
@@ -423,16 +454,40 @@ async function saveChanges() {
         />
       </div>
 
-      <div v-if="selectedNode.data.backendType === 'EMAIL'">
-        <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
-          >Recipient Email</label
-        >
-        <input
-          v-model="localRecipient"
-          type="email"
-          placeholder="user@example.com"
-          class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
-        />
+      <div v-if="selectedNode.data.backendType === 'EMAIL'" class="space-y-4">
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Recipient Email</label
+          >
+          <input
+            v-model="localRecipient"
+            type="text"
+            placeholder="user@example.com"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Subject</label
+          >
+          <input
+            v-model="localSubject"
+            type="text"
+            placeholder="Notification"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
+          />
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Body (HTML allowed)</label
+          >
+          <textarea
+            v-model="localBody"
+            rows="5"
+            placeholder="<p>Hello...</p>"
+            class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-xs text-slate-300 font-mono focus:border-primary focus:outline-none"
+          ></textarea>
+        </div>
       </div>
     </div>
 

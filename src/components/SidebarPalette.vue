@@ -81,6 +81,7 @@ function onDragStart(event: DragEvent, nodeType: string) {
           v-for="node in filteredTriggers"
           :key="node.type"
           :draggable="node.draggable"
+          :title="node.draggable ? 'Drag and drop onto canvas' : ''"
           :class="[
             'group flex items-center justify-between p-2 rounded border border-transparent transition-colors',
             node.draggable
@@ -118,6 +119,7 @@ function onDragStart(event: DragEvent, nodeType: string) {
           v-for="node in filteredLogic"
           :key="node.type"
           draggable="true"
+          title="Drag and drop onto canvas"
           class="group flex items-center justify-between p-2 rounded cursor-grab hover:bg-neutral-800 border border-transparent hover:border-slate-700 transition-colors relative"
           @dragstart="onDragStart($event, node.type)"
         >
@@ -158,7 +160,15 @@ function onDragStart(event: DragEvent, nodeType: string) {
               <p class="text-secondary text-[10px] font-mono">{{ node.sub }}</p>
             </div>
           </div>
-          <span class="text-slate-600 group-hover:text-slate-400 tracking-[-2px]">⋮⋮</span>
+          <span class="text-slate-600 group-hover:text-slate-400 tracking-[-2px]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <!-- Icon from Google Material Icons by Material Design Authors - https://github.com/material-icons/material-icons/blob/master/LICENSE -->
+              <path
+                fill="currentColor"
+                d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2m-2-8c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2m0-6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2m6 4c1.1 0 2-.9 2-2s-.9-2-2-2s-2 .9-2 2s.9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2"
+              />
+            </svg>
+          </span>
         </div>
       </div>
 
@@ -171,6 +181,7 @@ function onDragStart(event: DragEvent, nodeType: string) {
           v-for="node in filteredActions"
           :key="node.type"
           draggable="true"
+          title="Drag and drop onto canvas"
           class="group flex items-center justify-between p-2 rounded cursor-grab hover:bg-neutral-800 border border-transparent hover:border-slate-700 transition-colors"
           @dragstart="onDragStart($event, node.type)"
         >
@@ -193,7 +204,14 @@ function onDragStart(event: DragEvent, nodeType: string) {
               <p class="text-slate-500 text-[10px] font-mono">{{ node.sub }}</p>
             </div>
           </div>
-          <span class="text-slate-600 group-hover:text-slate-400 tracking-[-2px]">⋮⋮</span>
+          <span class="text-slate-600 group-hover:text-slate-400 tracking-[-2px]"
+            ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <!-- Icon from Google Material Icons by Material Design Authors - https://github.com/material-icons/material-icons/blob/master/LICENSE -->
+              <path
+                fill="currentColor"
+                d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2m-2-8c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2m0-6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2m6 4c1.1 0 2-.9 2-2s-.9-2-2-2s-2 .9-2 2s.9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2"
+              /></svg
+          ></span>
         </div>
       </div>
     </div>
