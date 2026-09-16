@@ -115,8 +115,7 @@ async function saveChanges() {
   props.selectedNode.data.inputField = localRegexInputField.value
   props.selectedNode.data.flags = localRegexFlags.value
 
-  // Mark as unsaved so the user can save everything later from the topbar
-  workflowStore.hasUnsavedChanges = true
+  // State is automatically tracked by the store's deep watcher
   showToast('Node config updated locally.', 'success')
   saving.value = false
 }

@@ -42,12 +42,10 @@ onNodesChange((changes: NodeChange[]) => {
         (node.position.x !== change.position.x || node.position.y !== change.position.y)
       ) {
         node.position = change.position
-        workflowStore.hasUnsavedChanges = true
       }
     }
     if (change.type === 'remove') {
       workflowStore.removeNode(change.id)
-      workflowStore.hasUnsavedChanges = true
     }
   }
 })
@@ -56,7 +54,6 @@ onEdgesChange((changes: EdgeChange[]) => {
   for (const change of changes) {
     if (change.type === 'remove') {
       workflowStore.removeEdge(change.id)
-      workflowStore.hasUnsavedChanges = true
     }
     // Note: edge addition is handled in onConnect
   }
@@ -133,7 +130,6 @@ function onDrop(event: DragEvent) {
     position,
     data: { ...defaults, status: 'IDLE' },
   })
-  workflowStore.hasUnsavedChanges = true
 }
 
 function onDragOver(event: DragEvent) {
@@ -147,11 +143,30 @@ function onNodeClick(e: NodeMouseEvent) {
 
 function onConnect(connection: Connection) {
   workflowStore.addEdge(connection)
-  workflowStore.hasUnsavedChanges = true
 }
 
 // Keyboard shortcuts
 function handleKeyDown(e: KeyboardEvent) {
+  // Undo: Ctrl+Z or Cmd+Z
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+    e.preventDefault()
+    workflowStore.undo()
+    return
+  }
+
+  // Redo: Ctrl+Y or Cmd+Shift+Z
+  if (
+    ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') ||
+    ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z')
+  ) {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+    e.preventDefault()
+    workflowStore.redo()
+    return
+  }
+
+  // Delete node
   if (e.key === 'Backspace' || e.key === 'Delete') {
     // Avoid deleting if user is typing in an input inside ConfigDrawer
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -159,7 +174,6 @@ function handleKeyDown(e: KeyboardEvent) {
     }
     if (selectedNode.value) {
       workflowStore.removeNode(selectedNode.value.id)
-      workflowStore.hasUnsavedChanges = true
       selectedNode.value = null
     }
   }

@@ -95,6 +95,30 @@ const STATUS_STYLES: Record<string, string> = {
     <!-- Right: Actions -->
     <div class="flex items-center gap-3">
       <div class="flex items-center gap-2 border-r border-slate-700 pr-3">
+        <!-- Undo / Redo -->
+        <div class="flex items-center gap-1 border-r border-slate-700 pr-2 mr-2">
+          <button
+            @click="workflowStore.undo"
+            :disabled="workflowStore.historyIndex <= 0"
+            title="Undo"
+            class="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+              <path fill-rule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          <button
+            @click="workflowStore.redo"
+            :disabled="workflowStore.historyIndex >= workflowStore.historyLength - 1"
+            title="Redo"
+            class="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+              <path fill-rule="evenodd" d="M12.207 2.232a.75.75 0 0 0 .025 1.06l4.146 3.958H6.375a5.375 5.375 0 0 0 0 10.75H9.25a.75.75 0 0 0 0-1.5H6.375a3.875 3.875 0 0 1 0-7.75h10.003l-4.146 3.957a.75.75 0 0 0 1.036 1.085l5.5-5.25a.75.75 0 0 0 0-1.085l-5.5-5.25a.75.75 0 0 0-1.06.025Z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
         <!-- Save -->
         <button
           @click="handleSave"

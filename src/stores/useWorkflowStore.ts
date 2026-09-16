@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, type Ref } from 'vue'
+import { ref, computed, watch, type Ref } from 'vue'
 import type { Node, Edge, Connection } from '@vue-flow/core'
 import { apiService, type ApiWorkflow, type WorkflowStatus } from '@/services/api.service'
 
@@ -57,7 +57,9 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const workflowId: Ref<string | null> = ref(null)
   const workflowName: Ref<string> = ref('')
   const workflowStatus: Ref<WorkflowStatus | null> = ref(null)
-  const hasUnsavedChanges = ref(false)
+
+  const lastSavedHistoryIndex = ref(0)
+  const hasUnsavedChanges = computed(() => lastSavedHistoryIndex.value !== historyIndex.value)
 
   function addNode(node: Node<ConduitNodeData>) {
     nodes.value.push(node)
@@ -95,6 +97,103 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
+  // History for Undo/Redo
+  interface Snapshot {
+    nodes: Node<ConduitNodeData>[]
+    edges: Edge[]
+  }
+  const history = ref<Snapshot[]>([])
+  const historyIndex = ref(-1)
+  const isUndoRedo = ref(false)
+
+  function getCleanState() {
+    return {
+      nodes: nodes.value.map((n) => ({
+        id: n.id,
+        type: n.type,
+        position: { x: n.position.x, y: n.position.y },
+        data: JSON.parse(JSON.stringify(n.data)),
+      })),
+      edges: edges.value.map((e) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle,
+      })),
+    }
+  }
+
+  function takeSnapshot() {
+    if (isUndoRedo.value) return
+
+    const currentStateStr = JSON.stringify(getCleanState())
+
+    if (historyIndex.value >= 0 && historyIndex.value < history.value.length) {
+      const lastSnapshotStr = JSON.stringify(history.value[historyIndex.value])
+      if (currentStateStr === lastSnapshotStr) {
+        return // Avoid spurious snapshots from Vue Flow internal changes
+      }
+    }
+
+    if (historyIndex.value < history.value.length - 1) {
+      history.value = history.value.slice(0, historyIndex.value + 1)
+    }
+
+    history.value.push(JSON.parse(currentStateStr))
+    if (history.value.length > 50) {
+      history.value.shift()
+    } else {
+      historyIndex.value++
+    }
+  }
+
+  function resetHistory() {
+    history.value = []
+    historyIndex.value = -1
+    lastSavedHistoryIndex.value = 0
+    isUndoRedo.value = false
+    takeSnapshot()
+  }
+
+  function undo() {
+    if (historyIndex.value > 0) {
+      isUndoRedo.value = true
+      historyIndex.value--
+      const snapshot = history.value[historyIndex.value]
+      nodes.value = JSON.parse(JSON.stringify(snapshot.nodes))
+      edges.value = JSON.parse(JSON.stringify(snapshot.edges))
+      setTimeout(() => {
+        isUndoRedo.value = false
+      }, 100)
+    }
+  }
+
+  function redo() {
+    if (historyIndex.value < history.value.length - 1) {
+      isUndoRedo.value = true
+      historyIndex.value++
+      const snapshot = history.value[historyIndex.value]
+      nodes.value = JSON.parse(JSON.stringify(snapshot.nodes))
+      edges.value = JSON.parse(JSON.stringify(snapshot.edges))
+      setTimeout(() => {
+        isUndoRedo.value = false
+      }, 100)
+    }
+  }
+
+  let snapshotTimeout: ReturnType<typeof setTimeout> | null = null
+  watch(
+    [nodes, edges],
+    () => {
+      if (isUndoRedo.value) return
+      if (snapshotTimeout) clearTimeout(snapshotTimeout)
+      snapshotTimeout = setTimeout(() => {
+        takeSnapshot()
+      }, 400)
+    },
+    { deep: true },
+  )
+
   function _applyWorkflow(workflow: ApiWorkflow) {
     workflowId.value = workflow.id
     workflowName.value = workflow.name
@@ -126,6 +225,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   async function loadWorkflow(id: string) {
     const workflow = await apiService.getWorkflow(id)
     _applyWorkflow(workflow)
+    resetHistory()
   }
 
   async function syncCanvas() {
@@ -152,7 +252,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const updated = await apiService.syncWorkflow(workflowId.value, payload)
     workflowName.value = updated.name
     workflowStatus.value = updated.status
-    hasUnsavedChanges.value = false
+    lastSavedHistoryIndex.value = historyIndex.value
     return updated
   }
 
@@ -169,6 +269,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
     workflowName,
     workflowStatus,
     hasUnsavedChanges,
+    historyIndex,
+    historyLength: computed(() => history.value.length),
     addNode,
     addEdge,
     removeNode,
@@ -177,5 +279,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     loadWorkflow,
     syncCanvas,
     setWorkflowStatus,
+    undo,
+    redo,
   }
 })
