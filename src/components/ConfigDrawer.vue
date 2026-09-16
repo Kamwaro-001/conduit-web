@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import type { GraphNode } from '@vue-flow/core'
-import type { ConditionRule, ConduitNodeData } from '@/stores/useWorkflowStore'
+import type { ConduitNodeData } from '@/stores/useWorkflowStore'
 import { useWorkflowStore } from '@/stores/useWorkflowStore'
-import { useToast } from '@/composables/useToast'
 
 const props = defineProps<{
   selectedNode: GraphNode<ConduitNodeData> | null
@@ -12,112 +10,18 @@ const props = defineProps<{
 const emit = defineEmits(['close'])
 
 const workflowStore = useWorkflowStore()
-const { showToast } = useToast()
-
-const localLabel = ref('')
-const localDescription = ref('')
-const localRules = ref<ConditionRule[]>([])
-const localMatchType = ref<'AND' | 'OR'>('AND')
-
-// HTTP_FETCH
-const localHttpMethod = ref<'GET' | 'POST' | 'PUT' | 'DELETE'>('GET')
-const localHttpUrl = ref('')
-
-// DELAY
-const localDelayMs = ref(0)
-
-// EMAIL
-const localRecipient = ref('')
-const localSubject = ref('')
-const localBody = ref('')
-
-// SCHEDULE
-const localCronExpression = ref('')
-
-// VISION
-const localVisionPrompt = ref('')
-const localVisionImageUrlField = ref('')
-const localVisionModel = ref('')
-
-// REGEX
-const localRegexPattern = ref('')
-const localRegexInputField = ref('')
-const localRegexFlags = ref('i')
-
-const saving = ref(false)
-
-watch(
-  () => props.selectedNode,
-  (node) => {
-    if (node) {
-      localLabel.value = node.data.label ?? ''
-      localDescription.value = node.data.description ?? ''
-      localRules.value = JSON.parse(JSON.stringify(node.data.rules ?? []))
-      localMatchType.value = node.data.matchType ?? 'AND'
-
-      localHttpMethod.value = node.data.method ?? 'GET'
-      localHttpUrl.value = node.data.url ?? ''
-
-      localDelayMs.value = node.data.delay_ms ?? 5000
-      localRecipient.value = node.data.recipient ?? ''
-      localSubject.value = node.data.subject ?? ''
-      localBody.value = node.data.body ?? ''
-      localCronExpression.value = node.data.cronExpression ?? '* * * * *'
-      localVisionPrompt.value = node.data.prompt ?? ''
-      localVisionImageUrlField.value = node.data.imageUrlField ?? ''
-      localVisionModel.value = node.data.model ?? ''
-      localRegexPattern.value = node.data.pattern ?? ''
-      localRegexInputField.value = node.data.inputField ?? 'payload.'
-      localRegexFlags.value = node.data.flags ?? 'i'
-    }
-  },
-  { immediate: true },
-)
 
 function addRule() {
-  localRules.value.push({ id: `rule_${Date.now()}`, field: 'payload.', operator: '>=', value: '' })
+  if (!props.selectedNode) return
+  if (!props.selectedNode.data.rules) {
+    props.selectedNode.data.rules = []
+  }
+  props.selectedNode.data.rules.push({ id: `rule_${Date.now()}`, field: 'payload.', operator: '>=', value: '' })
 }
 
 function removeRule(index: number) {
-  localRules.value.splice(index, 1)
-}
-
-function discardChanges() {
-  if (!props.selectedNode) return
-  localLabel.value = props.selectedNode.data.label ?? ''
-  localDescription.value = props.selectedNode.data.description ?? ''
-  localRules.value = JSON.parse(JSON.stringify(props.selectedNode.data.rules ?? []))
-  localMatchType.value = props.selectedNode.data.matchType ?? 'AND'
-}
-
-async function saveChanges() {
-  if (!props.selectedNode || saving.value) return
-  saving.value = true
-
-  // Apply changes to the live node data
-  props.selectedNode.data.label = localLabel.value
-  props.selectedNode.data.description = localDescription.value
-  props.selectedNode.data.rules = JSON.parse(JSON.stringify(localRules.value))
-  props.selectedNode.data.matchType = localMatchType.value
-
-  props.selectedNode.data.method = localHttpMethod.value
-  props.selectedNode.data.url = localHttpUrl.value
-
-  props.selectedNode.data.delay_ms = Number(localDelayMs.value)
-  props.selectedNode.data.recipient = localRecipient.value
-  props.selectedNode.data.subject = localSubject.value
-  props.selectedNode.data.body = localBody.value
-  props.selectedNode.data.cronExpression = localCronExpression.value
-  props.selectedNode.data.prompt = localVisionPrompt.value
-  props.selectedNode.data.imageUrlField = localVisionImageUrlField.value
-  props.selectedNode.data.model = localVisionModel.value
-  props.selectedNode.data.pattern = localRegexPattern.value
-  props.selectedNode.data.inputField = localRegexInputField.value
-  props.selectedNode.data.flags = localRegexFlags.value
-
-  // State is automatically tracked by the store's deep watcher
-  showToast('Node config updated locally.', 'success')
-  saving.value = false
+  if (!props.selectedNode || !props.selectedNode.data.rules) return
+  props.selectedNode.data.rules.splice(index, 1)
 }
 </script>
 
@@ -197,7 +101,7 @@ async function saveChanges() {
           >Label</label
         >
         <input
-          v-model="localLabel"
+          v-model="selectedNode.data.label"
           type="text"
           class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
         />
@@ -209,7 +113,7 @@ async function saveChanges() {
           >Description</label
         >
         <input
-          v-model="localDescription"
+          v-model="selectedNode.data.description"
           type="text"
           class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
         />
@@ -220,7 +124,7 @@ async function saveChanges() {
         <div>
           <label class="block text-[10px] text-slate-500 mb-1">Method</label>
           <select
-            v-model="localHttpMethod"
+            v-model="selectedNode.data.method"
             class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-sm text-slate-300"
           >
             <option value="GET">GET</option>
@@ -232,7 +136,7 @@ async function saveChanges() {
         <div>
           <label class="block text-[10px] text-slate-500 mb-1">Endpoint URL</label>
           <input
-            v-model="localHttpUrl"
+            v-model="selectedNode.data.url"
             type="text"
             placeholder="https://api.example.com/v1"
             class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono"
@@ -247,7 +151,7 @@ async function saveChanges() {
             >Cron Expression</label
           >
           <input
-            v-model="localCronExpression"
+            v-model="selectedNode.data.cronExpression"
             type="text"
             placeholder="* * * * *"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -263,7 +167,7 @@ async function saveChanges() {
             >Image URL Field</label
           >
           <input
-            v-model="localVisionImageUrlField"
+            v-model="selectedNode.data.imageUrlField"
             type="text"
             placeholder="node-id.extracted"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -274,7 +178,7 @@ async function saveChanges() {
             >Vision Prompt / Instruction</label
           >
           <textarea
-            v-model="localVisionPrompt"
+            v-model="selectedNode.data.prompt"
             rows="5"
             placeholder="Describe what to analyze or extract from the image..."
             class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-xs text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -285,7 +189,7 @@ async function saveChanges() {
             >Model</label
           >
           <input
-            v-model="localVisionModel"
+            v-model="selectedNode.data.model"
             type="text"
             placeholder="gemini-3.6-flash"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -300,7 +204,7 @@ async function saveChanges() {
             >Input Field Path</label
           >
           <input
-            v-model="localRegexInputField"
+            v-model="selectedNode.data.inputField"
             type="text"
             placeholder="payload.text"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -311,7 +215,7 @@ async function saveChanges() {
             >Regex Pattern</label
           >
           <input
-            v-model="localRegexPattern"
+            v-model="selectedNode.data.pattern"
             type="text"
             placeholder="^[a-z]+$"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -322,7 +226,7 @@ async function saveChanges() {
             >Flags</label
           >
           <input
-            v-model="localRegexFlags"
+            v-model="selectedNode.data.flags"
             type="text"
             placeholder="i"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -336,15 +240,15 @@ async function saveChanges() {
           class="flex justify-between items-center text-[10px] uppercase font-bold text-slate-500"
         >
           <span>Branching Criteria</span>
-          <span class="text-emerald-500 normal-case font-mono">{{ localRules.length }} Rules</span>
+          <span class="text-emerald-500 normal-case font-mono">{{ selectedNode.data.rules?.length || 0 }} Rules</span>
         </div>
 
         <div class="flex bg-neutral-800 rounded p-1">
           <button
-            @click="localMatchType = 'AND'"
+            @click="selectedNode.data.matchType = 'AND'"
             :class="[
               'flex-1 text-xs py-1 rounded transition-colors',
-              localMatchType === 'AND'
+              selectedNode.data.matchType === 'AND'
                 ? 'bg-slate-700 text-slate-200'
                 : 'text-slate-500 hover:text-slate-300',
             ]"
@@ -352,10 +256,10 @@ async function saveChanges() {
             Match ALL (AND)
           </button>
           <button
-            @click="localMatchType = 'OR'"
+            @click="selectedNode.data.matchType = 'OR'"
             :class="[
               'flex-1 text-xs py-1 rounded transition-colors',
-              localMatchType === 'OR'
+              selectedNode.data.matchType === 'OR'
                 ? 'bg-slate-700 text-slate-200'
                 : 'text-slate-500 hover:text-slate-300',
             ]"
@@ -365,7 +269,7 @@ async function saveChanges() {
         </div>
 
         <div
-          v-for="(rule, index) in localRules"
+          v-for="(rule, index) in selectedNode.data.rules"
           :key="rule.id"
           class="bg-neutral-800 border border-slate-700 rounded p-3 space-y-3"
         >
@@ -446,7 +350,7 @@ async function saveChanges() {
           >Delay Duration (ms)</label
         >
         <input
-          v-model="localDelayMs"
+          v-model="selectedNode.data.delay_ms"
           type="number"
           step="1000"
           class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -459,7 +363,7 @@ async function saveChanges() {
             >Recipient Email</label
           >
           <input
-            v-model="localRecipient"
+            v-model="selectedNode.data.recipient"
             type="text"
             placeholder="user@example.com"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -470,7 +374,7 @@ async function saveChanges() {
             >Subject</label
           >
           <input
-            v-model="localSubject"
+            v-model="selectedNode.data.subject"
             type="text"
             placeholder="Notification"
             class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
@@ -481,30 +385,13 @@ async function saveChanges() {
             >Body (HTML allowed)</label
           >
           <textarea
-            v-model="localBody"
+            v-model="selectedNode.data.body"
             rows="5"
             placeholder="<p>Hello...</p>"
             class="w-full bg-neutral-800 border border-slate-700 rounded p-2 text-xs text-slate-300 font-mono focus:border-primary focus:outline-none"
           ></textarea>
         </div>
       </div>
-    </div>
-
-    <!-- Footer actions -->
-    <div class="mt-8 pt-4 border-t border-slate-700 flex gap-2">
-      <button
-        @click="discardChanges"
-        class="flex-1 bg-transparent border border-slate-700 text-slate-300 text-xs py-2 rounded hover:bg-slate-800 transition-colors"
-      >
-        Discard
-      </button>
-      <button
-        @click="saveChanges"
-        :disabled="saving"
-        class="flex-1 bg-primary text-white text-xs py-2 rounded hover:bg-blue-500 transition-colors disabled:opacity-50"
-      >
-        {{ saving ? 'Saving…' : 'Save Changes' }}
-      </button>
     </div>
   </aside>
 </template>

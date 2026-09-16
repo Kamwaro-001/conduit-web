@@ -199,6 +199,19 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
+  function discardUnsavedChanges() {
+    if (lastSavedHistoryIndex.value !== -1 && lastSavedHistoryIndex.value < history.value.length) {
+      isUndoRedo.value = true
+      historyIndex.value = lastSavedHistoryIndex.value
+      const snapshot = history.value[historyIndex.value] as Snapshot
+      nodes.value = JSON.parse(JSON.stringify(snapshot.nodes))
+      edges.value = JSON.parse(JSON.stringify(snapshot.edges))
+      setTimeout(() => {
+        isUndoRedo.value = false
+      }, 100)
+    }
+  }
+
   let snapshotTimeout: ReturnType<typeof setTimeout> | null = null
   watch(
     [nodes, edges],
@@ -307,5 +320,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
     setWorkflowStatus,
     undo,
     redo,
+    discardUnsavedChanges,
   }
 })

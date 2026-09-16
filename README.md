@@ -1,41 +1,50 @@
-# conduit-web
+# Conduit Web
 
-This template should help get you started developing with Vue 3 in Vite.
+Conduit Web is the frontend interface for Conduit, a node-based workflow automation engine. It provides a visual canvas for users to build, configure, and manage automation workflows.
 
-## Recommended IDE Setup
+## Features
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Visual Workflow Builder: Drag-and-drop interface powered by Vue Flow.
+- Node Configuration: Customize triggers, HTTP requests, AI vision tasks, conditional logic, and email actions.
+- Real-time Execution Feedback: Monitor workflow status and node execution directly on the canvas.
+- Dynamic Variable Interpolation: Map outputs from previous nodes into downstream actions.
 
-## Recommended Browser Setup
+## Screenshots
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+<!-- Add screenshots or recordings of the Node UI here -->
 
-## Type Support for `.vue` Imports in TS
+## Tech Stack
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
+- Framework: Vue 3 (Composition API)
+- Build Tool: Vite
+- State Management: Pinia
+- Graph Canvas: Vue Flow
+- Styling: Tailwind CSS
 
 ## Project Setup
+
+Ensure you have Node.js installed.
+
+1. Install dependencies:
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+2. Environment Variables:
+   Create a `.env` file in the root directory and set your backend URL (defaults to localhost:3000 if omitted):
+
+```sh
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+3. Run the development server:
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+4. Build for production:
 
 ```sh
 npm run build
