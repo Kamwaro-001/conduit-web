@@ -14,6 +14,38 @@ const loading = ref(true)
 const newName = ref('')
 const creating = ref(false)
 const deletingId = ref<string | null>(null)
+const editingId = ref<string | null>(null)
+const editingName = ref('')
+const updatingName = ref(false)
+
+function startRenaming(workflow: ApiWorkflow) {
+  editingId.value = workflow.id
+  editingName.value = workflow.name
+}
+
+function cancelRenaming() {
+  editingId.value = null
+  editingName.value = ''
+}
+
+async function saveWorkflowName(workflow: ApiWorkflow) {
+  const name = editingName.value.trim()
+  if (!name || name === workflow.name) {
+    cancelRenaming()
+    return
+  }
+  updatingName.value = true
+  try {
+    const updated = await apiService.updateWorkflow(workflow.id, { name })
+    workflow.name = updated.name
+    showToast('Workflow renamed.', 'success')
+    cancelRenaming()
+  } catch {
+    showToast('Failed to rename workflow.', 'error')
+  } finally {
+    updatingName.value = false
+  }
+}
 
 onMounted(async () => {
   await fetchWorkflows()
@@ -64,20 +96,25 @@ function openEditor(id: string) {
 
 const STATUS_STYLES: Record<string, string> = {
   PUBLISHED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  DRAFT:     'bg-slate-700/50 text-slate-400 border-slate-600/30',
-  ARCHIVED:  'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  DRAFT: 'bg-slate-700/50 text-slate-400 border-slate-600/30',
+  ARCHIVED: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 </script>
 
 <template>
   <div class="min-h-screen w-screen bg-[#0B1120] font-sans text-slate-300">
-
     <!-- Top bar -->
-    <header class="h-14 bg-[#0F172A] border-b border-slate-700 flex items-center justify-between px-6 select-none">
+    <header
+      class="h-14 bg-[#0F172A] border-b border-slate-700 flex items-center justify-between px-6 select-none"
+    >
       <span class="text-primary text-lg font-bold">⑂ CONDUIT</span>
       <div class="flex items-center gap-4">
         <span class="text-slate-500 text-xs font-mono">{{ authStore.user?.email }}</span>
@@ -91,12 +128,13 @@ function formatDate(iso: string) {
     </header>
 
     <main class="max-w-3xl mx-auto px-6 py-12">
-
       <!-- Page heading + create -->
       <div class="flex items-center justify-between mb-8">
         <div>
           <h1 class="text-slate-100 text-xl font-bold">My Workflows</h1>
-          <p class="text-slate-500 text-xs mt-1 font-mono">{{ workflows.length }} workflow{{ workflows.length !== 1 ? 's' : '' }}</p>
+          <p class="text-slate-500 text-xs mt-1 font-mono">
+            {{ workflows.length }} workflow{{ workflows.length !== 1 ? 's' : '' }}
+          </p>
         </div>
 
         <!-- Inline create form -->
@@ -119,7 +157,11 @@ function formatDate(iso: string) {
 
       <!-- Loading state -->
       <div v-if="loading" class="space-y-3">
-        <div v-for="i in 3" :key="i" class="h-20 bg-[#0F172A] border border-slate-800 rounded-lg animate-pulse" />
+        <div
+          v-for="i in 3"
+          :key="i"
+          class="h-20 bg-[#0F172A] border border-slate-800 rounded-lg animate-pulse"
+        />
       </div>
 
       <!-- Empty state -->
@@ -139,11 +181,65 @@ function formatDate(iso: string) {
           class="group flex items-center justify-between bg-[#0F172A] border border-slate-700 rounded-lg px-5 py-4 cursor-pointer hover:border-primary/50 hover:bg-slate-800/30 transition-all"
           @click="openEditor(workflow.id)"
         >
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4 flex-1 min-w-0 mr-4">
             <div class="text-primary text-lg select-none">⑂</div>
-            <div>
-              <p class="text-slate-100 text-sm font-bold">{{ workflow.name }}</p>
-              <p class="text-slate-600 text-[10px] font-mono mt-0.5">Created {{ formatDate(workflow.createdAt) }}</p>
+            <div class="flex-1 min-w-0">
+              <!-- Editing mode -->
+              <div v-if="editingId === workflow.id" class="flex items-center gap-2" @click.stop>
+                <input
+                  v-model="editingName"
+                  type="text"
+                  class="bg-[#1E293B] border border-primary rounded px-2.5 py-1 text-sm font-bold text-slate-100 font-sans focus:outline-none w-64"
+                  @keydown.enter="saveWorkflowName(workflow)"
+                  @keydown.esc="cancelRenaming"
+                  autofocus
+                  :disabled="updatingName"
+                />
+                <button
+                  type="button"
+                  @click="saveWorkflowName(workflow)"
+                  :disabled="updatingName || !editingName.trim()"
+                  class="text-xs bg-primary text-white font-bold px-2.5 py-1 rounded hover:bg-blue-500 disabled:opacity-40"
+                >
+                  {{ updatingName ? '…' : 'Save' }}
+                </button>
+                <button
+                  type="button"
+                  @click="cancelRenaming"
+                  class="text-xs text-slate-400 hover:text-slate-200 px-1 py-1"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <!-- Normal display mode -->
+              <div v-else>
+                <div class="flex items-center gap-2">
+                  <p class="text-slate-100 text-sm font-bold truncate">{{ workflow.name }}</p>
+                  <button
+                    class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-slate-300 transition-opacity p-0.5 rounded"
+                    @click.stop="startRenaming(workflow)"
+                    title="Rename workflow"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      class="size-3.5"
+                    >
+                      <path
+                        d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z"
+                      />
+                      <path
+                        d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <p class="text-slate-600 text-[10px] font-mono mt-0.5">
+                  Created {{ formatDate(workflow.createdAt) }}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -162,14 +258,22 @@ function formatDate(iso: string) {
               @click.stop="deleteWorkflow(workflow.id)"
               title="Delete workflow"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
-                <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 3.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="size-4"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 3.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </button>
           </div>
         </li>
       </ul>
-
     </main>
   </div>
 </template>

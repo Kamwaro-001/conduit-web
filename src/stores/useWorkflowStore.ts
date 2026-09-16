@@ -66,8 +66,26 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   function addEdge(connection: Connection) {
+    // 1. Prevent multiple edges between the exact same two nodes
+    // (e.g. dragging the same connection twice, or routing both True/False handles to the same node)
+    const isAlreadyConnected = edges.value.some(
+      (e) => e.source === connection.source && e.target === connection.target,
+    )
+    if (isAlreadyConnected) return
+
+    // 2. A source handle can only have ONE outgoing connection.
+    // If one already exists (pointing to a different target), we remove it to allow "re-routing".
+    const existingIndex = edges.value.findIndex(
+      (e) => e.source === connection.source && e.sourceHandle === connection.sourceHandle,
+    )
+    if (existingIndex !== -1) {
+      edges.value.splice(existingIndex, 1)
+    }
+
+    // Since a source handle only has one output, this ID is inherently unique per workflow
+    const handleId = connection.sourceHandle || 'default'
     const newEdge: Edge = {
-      id: `edge_${connection.source}_${connection.target}`,
+      id: `edge_${connection.source}_${handleId}`,
       source: connection.source,
       target: connection.target,
       ...(connection.sourceHandle && { sourceHandle: connection.sourceHandle }),
@@ -256,6 +274,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
     return updated
   }
 
+  async function renameWorkflow(name: string) {
+    if (!workflowId.value) return
+    const updated = await apiService.updateWorkflow(workflowId.value, { name })
+    workflowName.value = updated.name
+    return updated
+  }
+
   async function setWorkflowStatus(status: WorkflowStatus) {
     if (!workflowId.value) return
     const updated = await apiService.updateWorkflow(workflowId.value, { status })
@@ -278,6 +303,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     updateNodeStatus,
     loadWorkflow,
     syncCanvas,
+    renameWorkflow,
     setWorkflowStatus,
     undo,
     redo,

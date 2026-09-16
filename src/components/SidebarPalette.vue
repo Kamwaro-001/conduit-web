@@ -186,7 +186,23 @@ function onDragStart(event: DragEvent, nodeType: string) {
           @dragstart="onDragStart($event, node.type)"
         >
           <div class="flex items-center gap-3">
+            <!-- HTTP_FETCH -->
             <svg
+              v-if="node.type === 'http_fetch'"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="size-5 text-sky-400"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M4.25 2A2.25 2.25 0 0 0 2 4.25v11.5A2.25 2.25 0 0 0 4.25 18h11.5A2.25 2.25 0 0 0 18 15.75V4.25A2.25 2.25 0 0 0 15.75 2H4.25Zm4.03 6.28a.75.75 0 0 0-1.06-1.06L4.97 9.47a.75.75 0 0 0 0 1.06l2.25 2.25a.75.75 0 0 0 1.06-1.06L6.56 10l1.72-1.72Zm4.5-1.06a.75.75 0 1 0-1.06 1.06L13.44 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06l2.25-2.25a.75.75 0 0 0 0-1.06l-2.25-2.25Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <!-- EMAIL -->
+            <svg
+              v-else-if="node.type === 'email'"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -197,6 +213,49 @@ function onDragStart(event: DragEvent, nodeType: string) {
               />
               <path
                 d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z"
+              />
+            </svg>
+            <!-- VISION -->
+            <svg
+              v-else-if="node.type === 'vision'"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="size-5 text-violet-400"
+            >
+              <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+              <path
+                fill-rule="evenodd"
+                d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <!-- REGEX -->
+            <svg
+              v-else-if="node.type === 'regex'"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="size-5 text-rose-400"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9.638 1.093a.75.75 0 0 1 .724 0l2 1.104a.75.75 0 1 1-.724 1.313L10 2.607l-1.638.903a.75.75 0 1 1-.724-1.313l2-1.104ZM5.403 4.287a.75.75 0 0 1-.295 1.019l-.805.444.805.444a.75.75 0 0 1-.724 1.314L4 7.028v.744a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 1 .388-.657l1.996-1.1a.75.75 0 0 1 1.019.294Zm9.194 0a.75.75 0 0 1 1.02-.295l1.995 1.101A.75.75 0 0 1 18 5.75v2a.75.75 0 0 1-1.5 0v-.744l-.384.181a.75.75 0 0 1-.724-1.314l.805-.444-.805-.444a.75.75 0 0 1-.295-1.02ZM7.104 10a.75.75 0 0 1 1.02-.295l.876.483V9.75a.75.75 0 0 1 1.5 0v.438l.876-.483a.75.75 0 1 1 .724 1.314L11.3 11.5l.8.496a.75.75 0 1 1-.8 1.28l-.8-.496v.47a.75.75 0 0 1-1.5 0v-.47l-.8.497a.75.75 0 0 1-.8-1.28l.8-.497-.8-.476A.75.75 0 0 1 7.104 10Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <!-- FALLBACK -->
+            <svg
+              v-else
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="size-5 text-slate-400"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-11.25a.75.75 0 0 0-1.5 0v4.59L7.3 9.24a.75.75 0 0 0-1.1 1.02l3.25 3.5a.75.75 0 0 0 1.1 0l3.25-3.5a.75.75 0 1 0-1.1-1.02l-1.95 2.1V6.75Z"
+                clip-rule="evenodd"
               />
             </svg>
             <div>
