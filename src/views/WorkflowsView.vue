@@ -143,7 +143,7 @@ function formatDate(iso: string) {
             v-model="newName"
             type="text"
             placeholder="New workflow name…"
-            class="bg-[#1E293B] border border-slate-700 rounded px-3 py-1.5 text-xs text-slate-300 font-mono focus:border-primary focus:outline-none w-52 transition-colors"
+            class="bg-neutral-800 border border-slate-700 rounded px-3 py-1.5 text-xs text-slate-300 font-mono focus:border-primary focus:outline-none w-52 transition-colors"
           />
           <button
             type="submit"
@@ -189,7 +189,7 @@ function formatDate(iso: string) {
                 <input
                   v-model="editingName"
                   type="text"
-                  class="bg-[#1E293B] border border-primary rounded px-2.5 py-1 text-sm font-bold text-slate-100 font-sans focus:outline-none w-64"
+                  class="bg-neutral-800 border border-primary rounded px-2.5 py-1 text-sm font-bold text-slate-100 font-sans focus:outline-none w-64"
                   @keydown.enter="saveWorkflowName(workflow)"
                   @keydown.esc="cancelRenaming"
                   autofocus

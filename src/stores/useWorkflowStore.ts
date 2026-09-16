@@ -177,7 +177,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     if (historyIndex.value > 0) {
       isUndoRedo.value = true
       historyIndex.value--
-      const snapshot = history.value[historyIndex.value]
+      const snapshot = history.value[historyIndex.value] as Snapshot
       nodes.value = JSON.parse(JSON.stringify(snapshot.nodes))
       edges.value = JSON.parse(JSON.stringify(snapshot.edges))
       setTimeout(() => {
@@ -190,7 +190,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     if (historyIndex.value < history.value.length - 1) {
       isUndoRedo.value = true
       historyIndex.value++
-      const snapshot = history.value[historyIndex.value]
+      const snapshot = history.value[historyIndex.value] as Snapshot
       nodes.value = JSON.parse(JSON.stringify(snapshot.nodes))
       edges.value = JSON.parse(JSON.stringify(snapshot.edges))
       setTimeout(() => {
