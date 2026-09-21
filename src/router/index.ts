@@ -12,6 +12,12 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/',
       redirect: '/workflows',
     },
@@ -35,7 +41,7 @@ router.beforeEach((to) => {
     return { name: 'login' }
   }
 
-  if (isAuthenticated && to.name === 'login') {
+  if (isAuthenticated && (to.name === 'login' || to.name === 'register')) {
     return { name: 'workflows' }
   }
 })

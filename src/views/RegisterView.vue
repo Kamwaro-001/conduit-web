@@ -13,18 +13,15 @@ const password = ref('')
 const loading = ref(false)
 const error = ref('')
 
-async function handleLogin() {
+async function handleRegister() {
   error.value = ''
   loading.value = true
   try {
-    await authStore.login(email.value, password.value)
+    await authStore.register(email.value, password.value)
     await router.push('/')
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Login failed'
-    error.value =
-      message.includes('401') || message.includes('Invalid')
-        ? 'Invalid email or password.'
-        : 'Something went wrong. Please try again.'
+    const message = err instanceof Error ? err.message : 'Registration failed'
+    error.value = message
     showToast(error.value, 'error')
   } finally {
     loading.value = false
@@ -45,9 +42,9 @@ async function handleLogin() {
 
       <!-- Card -->
       <div class="bg-[#0F172A] border border-slate-700 rounded-lg p-8 shadow-2xl">
-        <h2 class="text-slate-100 text-base font-bold mb-6">Sign in to your account</h2>
+        <h2 class="text-slate-100 text-base font-bold mb-6">Create an account</h2>
 
-        <form @submit.prevent="handleLogin" class="space-y-4">
+        <form @submit.prevent="handleRegister" class="space-y-4">
           <div>
             <label
               class="block text-[10px] text-slate-500 mb-1.5 uppercase tracking-wider font-bold"
@@ -58,7 +55,7 @@ async function handleLogin() {
               type="email"
               autocomplete="email"
               required
-              placeholder="admin@conduit.com"
+              placeholder="user@conduit.com"
               class="w-full bg-[#1E293B] border border-slate-700 rounded p-2.5 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none transition-colors"
             />
           </div>
@@ -71,7 +68,7 @@ async function handleLogin() {
             <input
               v-model="password"
               type="password"
-              autocomplete="current-password"
+              autocomplete="new-password"
               required
               placeholder="••••••••"
               class="w-full bg-[#1E293B] border border-slate-700 rounded p-2.5 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none transition-colors"
@@ -86,33 +83,19 @@ async function handleLogin() {
             :disabled="loading"
             class="w-full mt-2 bg-primary text-white font-bold py-2.5 rounded hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_10px_rgba(99,102,241,0.3)] text-sm"
           >
-            {{ loading ? 'Signing in…' : 'Sign In' }}
+            {{ loading ? 'Creating account…' : 'Sign Up' }}
           </button>
         </form>
 
         <div class="mt-6 pt-5 border-t border-slate-800 text-center">
           <p class="text-slate-600 text-xs font-mono">
-            Don't have an account?
+            Already have an account?
             <router-link
-              to="/register"
+              to="/login"
               class="text-primary hover:text-blue-400 transition-colors font-bold"
-              >Sign Up</router-link
+              >Sign In</router-link
             >
           </p>
-        </div>
-
-        <!-- Demo credentials hint -->
-        <div class="mt-6 pt-5 border-t border-slate-800 text-center">
-          <p class="text-slate-600 text-[10px] font-mono uppercase tracking-wider mb-2">
-            Demo credentials
-          </p>
-          <button
-            type="button"
-            class="text-slate-400 text-xs font-mono hover:text-slate-200 transition-colors"
-            @click="((email = 'admin@conduit.com'), (password = 'admin123'))"
-          >
-            admin@conduit.com / admin123
-          </button>
         </div>
       </div>
     </div>
