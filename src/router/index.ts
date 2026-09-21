@@ -46,4 +46,14 @@ router.beforeEach((to) => {
   }
 })
 
+router.afterEach((to) => {
+  const baseTitle = 'Conduit'
+  if (to.name) {
+    const routeName = String(to.name).charAt(0).toUpperCase() + String(to.name).slice(1)
+    document.title = `${routeName} | ${baseTitle}`
+  } else {
+    document.title = baseTitle
+  }
+})
+
 export default router

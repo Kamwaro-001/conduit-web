@@ -1,12 +1,12 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* Colors */
-  --color-primary: #6366F1;
-  --color-secondary: #06B6D4;
-  --color-tertiary: #10B981;
-  --color-neutral-900: #0E131F;
-  --color-neutral-800: #1E293B;
+  --color-primary: #6366f1;
+  --color-secondary: #06b6d4;
+  --color-tertiary: #10b981;
+  --color-neutral-900: #0e131f;
+  --color-neutral-800: #1e293b;
   --color-neutral-700: #334155;
 
   /* Fonts */

@@ -16,7 +16,12 @@ function addRule() {
   if (!props.selectedNode.data.rules) {
     props.selectedNode.data.rules = []
   }
-  props.selectedNode.data.rules.push({ id: `rule_${Date.now()}`, field: 'payload.', operator: '>=', value: '' })
+  props.selectedNode.data.rules.push({
+    id: `rule_${Date.now()}`,
+    field: 'payload.',
+    operator: '>=',
+    value: '',
+  })
 }
 
 function removeRule(index: number) {
@@ -240,7 +245,9 @@ function removeRule(index: number) {
           class="flex justify-between items-center text-[10px] uppercase font-bold text-slate-500"
         >
           <span>Branching Criteria</span>
-          <span class="text-emerald-500 normal-case font-mono">{{ selectedNode.data.rules?.length || 0 }} Rules</span>
+          <span class="text-emerald-500 normal-case font-mono"
+            >{{ selectedNode.data.rules?.length || 0 }} Rules</span
+          >
         </div>
 
         <div class="flex bg-neutral-800 rounded p-1">
