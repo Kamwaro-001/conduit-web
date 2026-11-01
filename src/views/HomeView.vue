@@ -16,7 +16,11 @@ import SidebarPalette from '../components/SidebarPalette.vue'
 import ConfigDrawer from '../components/ConfigDrawer.vue'
 import CustomNode from '../components/nodes/CustomNode.vue'
 import TopNavbar from '@/components/TopNavbar.vue'
-import { useWorkflowStore, type ConduitNodeData } from '../stores/useWorkflowStore'
+import {
+  DEFAULT_SCHEDULE_TIMEZONE,
+  useWorkflowStore,
+  type ConduitNodeData,
+} from '../stores/useWorkflowStore'
 import { socketService } from '@/services/socket.service'
 import { apiService } from '@/services/api.service'
 import { useToast } from '@/composables/useToast'
@@ -75,6 +79,7 @@ const NODE_DEFAULTS: Record<
     description: '* * * * *',
     backendType: 'SCHEDULE',
     cronExpression: '* * * * *',
+    timezone: DEFAULT_SCHEDULE_TIMEZONE,
   },
   condition: {
     label: 'Condition / Branch',

@@ -2,8 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { apiService } from '@/services/api.service'
 import router from '@/router'
-
-const TOKEN_KEY = 'conduit_token'
+import { isTokenValid, TOKEN_KEY } from '@/utils/auth'
 
 export interface AuthUser {
   id: string
@@ -12,10 +11,15 @@ export interface AuthUser {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
+  const storedToken = localStorage.getItem(TOKEN_KEY)
+  const token = ref<string | null>(isTokenValid(storedToken) ? storedToken : null)
   const user = ref<AuthUser | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
+
+  if (storedToken && !token.value) {
+    localStorage.removeItem(TOKEN_KEY)
+  }
 
   function _persist(newToken: string, newUser: AuthUser) {
     token.value = newToken

@@ -100,4 +100,11 @@ async function handleRegister() {
       </div>
     </div>
   </div>
+  <a
+    href="https://kamwaro.dev"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="fixed bottom-4 right-5 text-[10px] text-slate-600 hover:text-slate-400 font-mono transition-colors"
+    >kamwaro.dev</a
+  >
 </template>

@@ -163,6 +163,20 @@ function removeRule(index: number) {
           />
           <p class="text-[10px] text-slate-500 mt-1 font-mono">min hour day month weekday</p>
         </div>
+        <div>
+          <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-bold"
+            >Timezone</label
+          >
+          <select
+            v-model="selectedNode.data.timezone"
+            class="w-full bg-[#1E293B] border border-slate-700 rounded p-2 text-sm text-slate-300 font-mono focus:border-primary focus:outline-none"
+          >
+            <option value="Africa/Nairobi">Africa/Nairobi</option>
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="Europe/London">Europe/London</option>
+          </select>
+        </div>
       </div>
 
       <!-- VISION Config -->

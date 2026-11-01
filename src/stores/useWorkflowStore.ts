@@ -10,6 +10,32 @@ export interface ConditionRule {
   value: string
 }
 
+export const DEFAULT_SCHEDULE_TIMEZONE = 'Africa/Nairobi'
+
+function normalizeNodeConfig(config: unknown): Record<string, unknown> {
+  let normalized = config
+
+  if (typeof normalized === 'string') {
+    try {
+      normalized = JSON.parse(normalized)
+    } catch {
+      throw new Error('Invalid workflow node configuration')
+    }
+  }
+
+  if (!normalized || typeof normalized !== 'object' || Array.isArray(normalized)) {
+    return {}
+  }
+
+  const configRecord = normalized as Record<string, unknown>
+  const nestedConfig = configRecord.config ?? configRecord.data
+  if (nestedConfig && typeof nestedConfig === 'object' && !Array.isArray(nestedConfig)) {
+    return nestedConfig as Record<string, unknown>
+  }
+
+  return configRecord
+}
+
 export interface ConduitNodeData {
   label: string // display name — stored in config so it survives sync/reload
   description: string
@@ -40,6 +66,7 @@ export interface ConduitNodeData {
   body?: string
   // SCHEDULE
   cronExpression?: string
+  timezone?: string
   // VISION
   prompt?: string
   imageUrlField?: string
@@ -230,18 +257,31 @@ export const useWorkflowStore = defineStore('workflow', () => {
     workflowName.value = workflow.name
     workflowStatus.value = workflow.status
 
-    nodes.value = workflow.nodes.map((apiNode) => ({
-      id: apiNode.id,
-      type: 'custom',
-      position: apiNode.ui_position,
-      data: {
-        label: (apiNode.config.label as string) ?? apiNode.type,
-        backendType: apiNode.type as ConduitNodeData['backendType'],
-        description: (apiNode.config.description as string) ?? '',
-        ...apiNode.config,
-        status: 'IDLE' as const,
-      },
-    }))
+    nodes.value = workflow.nodes.map((apiNode) => {
+      const config = normalizeNodeConfig(apiNode.config)
+      const isSchedule = apiNode.type === 'SCHEDULE'
+      const cron =
+        (config.cronExpression as string | undefined) ??
+        (config.cron as string | undefined) ??
+        (config.cron_expression as string | undefined)
+
+      return {
+        id: apiNode.id,
+        type: 'custom',
+        position: apiNode.ui_position,
+        data: {
+          label: (config.label as string) ?? apiNode.type,
+          backendType: apiNode.type as ConduitNodeData['backendType'],
+          description: (config.description as string) ?? '',
+          ...config,
+          ...(isSchedule && {
+            cronExpression: cron,
+            timezone: (config.timezone as string | undefined) || DEFAULT_SCHEDULE_TIMEZONE,
+          }),
+          status: 'IDLE' as const,
+        },
+      }
+    })
 
     edges.value = workflow.edges.map((apiEdge) => ({
       id: apiEdge.id,
@@ -264,7 +304,23 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     const payload = {
       nodes: nodes.value.map((node) => {
-        const { backendType, status, executionTimeMs, outputPreview, ...config } = node.data!
+        const {
+          backendType,
+          status,
+          executionTimeMs,
+          outputPreview,
+          cronExpression,
+          timezone,
+          ...nodeConfig
+        } = node.data!
+        const config =
+          backendType === 'SCHEDULE'
+            ? {
+                ...nodeConfig,
+                cron: cronExpression ?? (nodeConfig as { cron?: string }).cron,
+                timezone: timezone || DEFAULT_SCHEDULE_TIMEZONE,
+              }
+            : nodeConfig
         return {
           id: node.id,
           type: backendType,

@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-const TOKEN_KEY = 'conduit_token'
+import { isTokenValid, TOKEN_KEY } from '@/utils/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,7 +34,12 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const isAuthenticated = !!localStorage.getItem(TOKEN_KEY)
+  const token = localStorage.getItem(TOKEN_KEY)
+  const isAuthenticated = isTokenValid(token)
+
+  if (!isAuthenticated && token) {
+    localStorage.removeItem(TOKEN_KEY)
+  }
 
   if (!isAuthenticated && !to.meta.public) {
     return { name: 'login' }

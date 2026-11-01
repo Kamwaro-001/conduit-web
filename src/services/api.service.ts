@@ -1,5 +1,5 @@
 const BASE_URL = (import.meta.env.VITE_BACKEND_URL as string) || 'http://localhost:3000'
-const TOKEN_KEY = 'conduit_token'
+import { TOKEN_KEY } from '@/utils/auth'
 
 // ---- Shared types (mirrors backend DTOs / entities) ----
 
@@ -87,6 +87,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
 
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem(TOKEN_KEY)
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login')
+      }
+    }
     const body = await res.text()
     throw new Error(`[${res.status}] ${path}: ${body}`)
   }
