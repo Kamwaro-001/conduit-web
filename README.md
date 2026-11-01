@@ -23,8 +23,6 @@ Conduit Web is the frontend interface for Conduit, a node-based workflow automat
 
 ## Project Setup
 
-Ensure you have Node.js installed.
-
 1. Install dependencies:
 
 ```sh
